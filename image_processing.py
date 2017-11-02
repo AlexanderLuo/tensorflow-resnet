@@ -108,11 +108,11 @@ def decode_jpeg(image_buffer, scope=None):
 
   Args:
     image_buffer: scalar string Tensor.
-    scope: Optional scope for op_scope.
+    scope: Optional scope for name_scope.
   Returns:
     3-D float Tensor with values ranging from [0, 1).
   """
-    with tf.op_scope([image_buffer], scope, 'decode_jpeg'):
+    with tf.name_scope( scope, 'decode_jpeg'):
         # Decode the string as an RGB JPEG.
         # Note that the resulting image contains an unknown height and width
         # that is set dynamically by decode_jpeg. In other words, the height
@@ -137,11 +137,11 @@ def distort_color(image, thread_id=0, scope=None):
   Args:
     image: Tensor containing single image.
     thread_id: preprocessing thread ID.
-    scope: Optional scope for op_scope.
+    scope: Optional scope for name_scope.
   Returns:
     color-distorted image
   """
-    with tf.op_scope([image], scope, 'distort_color'):
+    with tf.name_scope(scope, 'distort_color'):
         color_ordering = thread_id % 2
 
         if color_ordering == 0:
@@ -175,11 +175,11 @@ def distort_image(image, height, width, bbox, thread_id=0, scope=None):
       where each coordinate is [0, 1) and the coordinates are arranged
       as [ymin, xmin, ymax, xmax].
     thread_id: integer indicating the preprocessing thread.
-    scope: Optional scope for op_scope.
+    scope: Optional scope for name_scope.
   Returns:
     3-D float Tensor of distorted image used for training.
   """
-    with tf.op_scope([image, height, width, bbox], scope, 'distort_image'):
+    with tf.name_scope(scope, 'distort_image'):
 
         # NOTE(ry) I unceremoniously removed all the bounding box code.
         # Original here: https://github.com/tensorflow/models/blob/148a15fb043dacdd1595eb4c5267705fbd362c6a/inception/inception/image_processing.py
@@ -191,13 +191,12 @@ def distort_image(image, height, width, bbox, thread_id=0, scope=None):
         # fashion based on the thread number.
         # Note that ResizeMethod contains 4 enumerated resizing methods.
         resize_method = thread_id % 4
-        distorted_image = tf.image.resize_images(distorted_image, height,
-                                                 width, resize_method)
+        distorted_image = tf.image.resize_images(distorted_image, size=(height,width), method=resize_method)
         # Restore the shape since the dynamic slice based upon the bbox_size loses
         # the third dimension.
         distorted_image.set_shape([height, width, 3])
         if not thread_id:
-            tf.image_summary('cropped_resized_image',
+            tf.summary.image('cropped_resized_image',
                              tf.expand_dims(distorted_image, 0))
 
         # Randomly flip the image horizontally.
@@ -207,7 +206,7 @@ def distort_image(image, height, width, bbox, thread_id=0, scope=None):
         distorted_image = distort_color(distorted_image, thread_id)
 
         if not thread_id:
-            tf.image_summary('final_distorted_image',
+            tf.summary.image('final_distorted_image',
                              tf.expand_dims(distorted_image, 0))
         return distorted_image
 
@@ -219,11 +218,12 @@ def eval_image(image, height, width, scope=None):
     image: 3-D float Tensor
     height: integer
     width: integer
-    scope: Optional scope for op_scope.
+    scope: Optional scope for name_scope.
   Returns:
     3-D float Tensor of prepared image.
   """
-    with tf.op_scope([image, height, width], scope, 'eval_image'):
+    # with tf.name_scope([image, height, width], scope, 'eval_image'):
+    with tf.name_scope(scope, 'eval_image'):
         # Crop the central region of the image with an area containing 87.5% of
         # the original image.
         image = tf.image.central_crop(image, central_fraction=0.875)
@@ -266,8 +266,8 @@ def image_preprocessing(image_buffer, bbox, train, thread_id=0):
         image = eval_image(image, height, width)
 
     # Finally, rescale to [-1,1] instead of [0, 1)
-    image = tf.sub(image, 0.5)
-    image = tf.mul(image, 2.0)
+    image = tf.subtract(image, 0.5)
+    image = tf.multiply(image, 2.0)
     return image
 
 
