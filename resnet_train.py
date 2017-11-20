@@ -77,15 +77,15 @@ def train(is_training, logits, images, labels):
     batchnorm_updates_op = tf.group(*batchnorm_updates)
     train_op = tf.group(apply_gradient_op, batchnorm_updates_op)
 
-    resnet_variables = tf.global_variables()
+    resnet_variables = tf.trainable_variables()
     saver1 = tf.train.Saver(resnet_variables)
     # 以下变量不需要从训练好的模型中恢复
-    resnet_variables = filter(lambda x:"val_step" not in x.name, resnet_variables)
-    resnet_variables = filter(lambda x:"Momentum" not in x.name, resnet_variables)
-    resnet_variables = filter(lambda x:"biased" not in x.name, resnet_variables)
-    resnet_variables = filter(lambda x:"local_step" not in x.name, resnet_variables)
-    resnet_variables = filter(lambda x:"global_step" not in x.name, resnet_variables)
-    resnet_variables = filter(lambda x:"ExponentialMovingAverage" not in x.name, resnet_variables)
+    # resnet_variables = filter(lambda x:"val_step" not in x.name, resnet_variables)
+    # resnet_variables = filter(lambda x:"Momentum" not in x.name, resnet_variables)
+    # resnet_variables = filter(lambda x:"biased" not in x.name, resnet_variables)
+    # resnet_variables = filter(lambda x:"local_step" not in x.name, resnet_variables)
+    # resnet_variables = filter(lambda x:"global_step" not in x.name, resnet_variables)
+    # resnet_variables = filter(lambda x:"ExponentialMovingAverage" not in x.name, resnet_variables)
     resnet_variables = filter(lambda x:"fc" not in x.name, resnet_variables)
     
     saver2 = tf.train.Saver(resnet_variables)
